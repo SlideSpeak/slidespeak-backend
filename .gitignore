@@ -4,3 +4,4 @@ documents/
 preview_images/
 .env
 .idea
+.DS_Store
