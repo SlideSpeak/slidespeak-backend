@@ -1,0 +1,6 @@
+env/
+__pycache__/
+documents/
+preview_images/
+.env
+.idea
