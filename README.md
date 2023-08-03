@@ -2,7 +2,7 @@
 
 ![slidespeak-banner-github](https://github.com/SlideSpeak/slidespeak-backend/assets/5519740/6dba254f-abdd-40fd-a647-59ec2b41e0fb)
 
-SlideSpeak allows you to chat with your PowerPoint slides. Upload any PPTX file and ask questions about the content.
+[SlideSpeak](https://slidespeak.co): Summarize PowerPoint files with AI. Chat and ask questions about any PowerPoint file. Upload your PowerPoint files and use SlideSpeak to get the information you need.
 
 SlideSpeak was built with:
 
