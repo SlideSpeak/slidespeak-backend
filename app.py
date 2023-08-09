@@ -59,7 +59,7 @@ def upload_file():
     if "file" not in request.files:
         return "Please send a POST request with a file", 400
 
-    with ThreadPoolExecutor as executor:
+    with ThreadPoolExecutor(max_workers=10) as executor:
         filepath = None
         try:
             generated_uuid = str(uuid.uuid4())
@@ -146,12 +146,6 @@ def upload_file():
         make_response(jsonify({"uuid": generated_uuid, "previewUrls": preview_urls})),
         200,
     )
-
-
-@app.route("/getDocuments", methods=["GET"])
-def get_documents():
-    document_list = document_manager.get_documents_list()
-    return make_response(jsonify(document_list)), 200
 
 
 @app.route("/")

@@ -37,7 +37,6 @@ class DocumentManager:
         self.callback_manager = CallbackManager([self.llama_debug])
         self.PptxReader = download_loader("PptxReader")
         self.loader = self.PptxReader()
-        self.stored_docs = {}
         self.index = None
 
     def initialize_index(self):
@@ -87,12 +86,3 @@ class DocumentManager:
             document.doc_id = doc_id
 
         self.index.insert(document)
-        self.stored_docs[document.doc_id] = document.text[
-            0:200
-        ]  # only take the first 200 chars
-
-    def get_documents_list(self) -> list:
-        documents_list = []
-        for doc_id, doc_text in self.stored_docs.items():
-            documents_list.append({"id": doc_id, "text": doc_text})
-        return documents_list
