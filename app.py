@@ -17,7 +17,7 @@ app.response_buffering = False
 CORS(app)
 
 document_manager = DocumentManager()
-document_manager.initialize_index()
+# document_manager.initialize_index()
 
 
 @app.route("/stream")
@@ -30,7 +30,7 @@ def stream():
 
     if uuid_id is None:
         return "No text found, please include a ?text=blah parameter in the URL", 400
-
+    document_manager.initialize_index(uuid_id)
     answer_stream = document_manager.query_stream(query_text, uuid_id)
 
     return Response(answer_stream, mimetype="text/event-stream")
@@ -59,88 +59,72 @@ def upload_file():
     if "file" not in request.files:
         return "Please send a POST request with a file", 400
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        filepath = None
-        try:
-            generated_uuid = str(uuid.uuid4())
-            uploaded_file = request.files["file"]
-            filename = secure_filename(uploaded_file.filename)
-            filepath = os.path.join("documents", os.path.basename(filename))
-
-            start_time = time.time()
-            uploaded_file.save(filepath)
-            print("Saving the local PPT file: {:.2f}s".format(time.time() - start_time))
-
-            start_time = time.time()
-            if request.form.get("filename_as_doc_id", None) is not None:
-                document_manager.insert_into_index(filepath, doc_id=filename)
-            else:
-                document_manager.insert_into_index(filepath, generated_uuid)
-            print(
-                "Inserting into llama index: {:.2f}s".format(time.time() - start_time)
-            )
-        except Exception as e:
-            print(e)
-            # cleanup temp file
-            if filepath is not None and os.path.exists(filepath):
-                os.remove(filepath)
-            return "Error: {}".format(str(e)), 500
-
-        # upload file to s3
-        start_time = time.time()
-        upload_done = executor.submit(
-            upload_file_to_s3,
-            filepath,
-            "slidespeak-files",
-            generated_uuid + os.path.splitext(filepath)[1],
-        )
-        print("Upload PPT to S3: {:.2f}s".format(time.time() - start_time))
-
-        # delete file after upload
-        upload_done.add_done_callback(
-            lambda _: os.remove(filepath) if os.path.exists(filepath) else None
-        )
+    filepath = None
+    try:
+        generated_uuid = str(uuid.uuid4())
+        uploaded_file = request.files["file"]
+        filename = secure_filename(uploaded_file.filename)
+        print('filename')
+        print(uploaded_file)
+        filepath = os.path.join("documents", os.path.basename(filename))
 
         start_time = time.time()
-        preview_file_paths = ppt_preview(
-            filepath, "preview_images/" + generated_uuid + ".jpg"
+        uploaded_file.save(filepath)
+        print("Saving the local PPT file: {:.2f}s".format(time.time() - start_time))
+
+        start_time = time.time()
+        if request.form.get("filename_as_doc_id", None) is not None:
+            document_manager.insert_into_index(filepath, doc_id=filename)
+        else:
+            document_manager.insert_into_index(filepath, generated_uuid)
+        print(
+            "Inserting into llama index: {:.2f}s".format(time.time() - start_time)
         )
-        print("Generating PPT preview: {:.2f}s".format(time.time() - start_time))
+    except Exception as e:
+        print(e)
+        # cleanup temp file
+        if filepath is not None and os.path.exists(filepath):
+            os.remove(filepath)
+        return "Error: {}".format(str(e)), 500
 
-        preview_urls_dict = {}
+    # upload file to s3
+    start_time = time.time()
+    upload_file_to_s3(
+        filepath,
+        "slidespeak-files",
+        generated_uuid + os.path.splitext(filepath)[1],
+    )
+    print("Upload PPT to S3: {:.2f}s".format(time.time() - start_time))
 
-        if len(preview_file_paths) > 0:
-            # Make a list of all futures for the uploads
-            future_to_preview = {
-                executor.submit(
-                    upload_file_to_s3,
+    # delete file after upload
+    if os.path.exists(filepath):
+        os.remove(filepath)
+
+    start_time = time.time()
+    preview_file_paths = ppt_preview(
+        filepath, "preview_images/" + generated_uuid + ".jpg"
+    )
+    print("Generating PPT preview: {:.2f}s".format(time.time() - start_time))
+
+    preview_urls_dict = {}
+
+    if len(preview_file_paths) > 0:
+        # Make a list of all futures for the uploads
+        for preview_file_path in preview_file_paths:
+            try:
+                index = preview_file_paths.index(preview_file_path)
+                preview_urls_dict[index] = upload_file_to_s3(
                     preview_file_path,
                     "slidespeak-files",
-                    "preview-images/" + os.path.basename(preview_file_path),
-                ): preview_file_path
-                for preview_file_path in preview_file_paths
-            }
-
-            start_time = time.time()
-            for future in as_completed(future_to_preview):
-                preview_file_path = future_to_preview[future]
-                try:
-                    preview_url = future.result()
-                    index = preview_file_paths.index(preview_file_path)
-                    preview_urls_dict[index] = preview_url
-
-                    if os.path.exists(preview_file_path):
-                        os.remove(preview_file_path)
-                except Exception as exc:
-                    print(f"{preview_file_path} generated an exception: {exc}")
-            print(
-                "Uploading preview images to S3: {:.2f}s".format(
-                    time.time() - start_time
+                    "preview-images/" + os.path.basename(preview_file_path)
                 )
-            )
+                if os.path.exists(preview_file_path):
+                    os.remove(preview_file_path)
+            except Exception as exc:
+                print(f"{preview_file_path} generated an exception: {exc}")
 
-        # Convert dict to list in correct order
-        preview_urls = [preview_urls_dict[i] for i in sorted(preview_urls_dict.keys())]
+    # Convert dict to list in correct order
+    preview_urls = [preview_urls_dict[i] for i in sorted(preview_urls_dict.keys())]
 
     return (
         make_response(jsonify({"uuid": generated_uuid, "previewUrls": preview_urls})),
@@ -154,4 +138,4 @@ def home():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5601)
+    app.run(host="0.0.0.0", port=8000)

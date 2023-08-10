@@ -3,7 +3,6 @@ import zipfile
 import subprocess
 from pdf2image import convert_from_path
 
-
 def search_and_extract(zip_filepath, target_files, extract_to):
     # Ensure the target directory exists
     if not os.path.exists(extract_to):
@@ -44,7 +43,5 @@ def ppt_preview(ppt_file_path, preview_file_path):
         fname = os.path.splitext(preview_file_path)[0] + f"-{i}.jpg"
         image.save(fname, "JPEG")
         preview_file_paths.append(fname)
-    # Save the first image (the first slide of the ppt) to the preview_file_path
-    # images[0].save(preview_file_path, "JPEG")
 
     return preview_file_paths

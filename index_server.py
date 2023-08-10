@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from llama_index.callbacks import LlamaDebugHandler, CallbackManager
 import boto3
 import pinecone
+import openai
 from llama_index.storage.docstore import MongoDocumentStore
 from llama_index.node_parser import SimpleNodeParser
 from llama_index.vector_stores.pinecone import PineconeVectorStore
@@ -16,13 +17,14 @@ from llama_index import (
 )
 from llama_index import download_loader
 
-boto3.set_stream_logger("botocore", level="DEBUG")
+# boto3.set_stream_logger("botocore", level="DEBUG")
 load_dotenv()
 
 MONGO_DB_URL = os.environ["MONGO_DB_URL"]
 PINECONE_API_KEY = os.environ["PINECONE_API_KEY"]
 PINECONE_REGION = os.environ["PINECONE_REGION"]
 
+openai.api_key = os.environ["OPENAI_API_KEY"]
 
 class DocumentManager:
     def __init__(self):
@@ -39,7 +41,7 @@ class DocumentManager:
         self.loader = self.PptxReader()
         self.index = None
 
-    def initialize_index(self):
+    def initialize_index(self, namespace: str):
         llm_predictor = LLMPredictor(
             llm=ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo", streaming=True)
         )
@@ -52,6 +54,7 @@ class DocumentManager:
         pinecone_index = pinecone.Index("pptx-index")
         vector_store = PineconeVectorStore(
             pinecone_index=pinecone_index,
+            namespace=namespace
         )
         storage_context = StorageContext.from_defaults(
             docstore=self.docstore,
@@ -63,9 +66,9 @@ class DocumentManager:
         )
 
     def query_stream(self, query: str, namespace: str):
-        # TODO: test if namespace here works properly
+        self.initialize_index(namespace)
         streaming_response = self.index.as_query_engine(
-            streaming=True, similarity_top_k=1, namespace=namespace
+            streaming=True, similarity_top_k=1
         ).query(query)
         for text in streaming_response.response_gen:
             # do something with text as they arrive.
@@ -73,10 +76,12 @@ class DocumentManager:
             yield text
 
     def query_index(self, query_text: str, namespace: str) -> str:
-        response = self.index.as_query_engine(namespace=namespace).query(query_text)
+        self.initialize_index(namespace)
+        response = self.index.as_query_engine().query(query_text)
         return response
 
     def insert_into_index(self, doc_file_path, doc_id=None):
+        self.initialize_index(doc_id)
         document = self.loader.load_data(file=doc_file_path)[0]
         parser = SimpleNodeParser()
         nodes = parser.get_nodes_from_documents([document])
@@ -84,5 +89,4 @@ class DocumentManager:
 
         if doc_id is not None:
             document.doc_id = doc_id
-
         self.index.insert(document)
