@@ -64,15 +64,8 @@ def upload_file():
         generated_uuid = str(uuid.uuid4())
         uploaded_file = request.files["file"]
 
-        if is_ascii(uploaded_file.filename):
-            filename = secure_filename(uploaded_file.filename)
-        else:
-            filename = secure_filename(str(uuid.uuid4()) + '.pptx')
-
+        filename = secure_filename(str(uuid.uuid4()) + '.pptx')
         filepath = os.path.join("documents", os.path.basename(filename))
-
-        if not filepath.endswith('.pptx'):
-            raise ValueError("The provided file is not a .pptx file.")
 
         start_time = time.time()
         uploaded_file.save(filepath)
