@@ -68,6 +68,9 @@ def upload_file():
         print(uploaded_file)
         filepath = os.path.join("documents", os.path.basename(filename))
 
+        if not file_path.endswith('.pptx'):
+            raise ValueError("The provided file is not a .pptx file.")
+
         start_time = time.time()
         uploaded_file.save(filepath)
         print("Saving the local PPT file: {:.2f}s".format(time.time() - start_time))
