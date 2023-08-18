@@ -45,3 +45,7 @@ def ppt_preview(ppt_file_path, preview_file_path):
         preview_file_paths.append(fname)
 
     return preview_file_paths
+
+
+def is_ascii(s):
+    return all(ord(c) < 128 for c in s)
