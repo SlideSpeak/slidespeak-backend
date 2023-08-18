@@ -68,7 +68,7 @@ def upload_file():
         print(uploaded_file)
         filepath = os.path.join("documents", os.path.basename(filename))
 
-        if not file_path.endswith('.pptx'):
+        if not filepath.endswith('.pptx'):
             raise ValueError("The provided file is not a .pptx file.")
 
         start_time = time.time()
