@@ -1,13 +1,11 @@
 import os
 import time
 import uuid
-from concurrent.futures import ThreadPoolExecutor
-from concurrent.futures import as_completed
 
 from flask import Flask, request, jsonify, make_response, Response
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
-from file_utils import ppt_preview, is_ascii
+from file_utils import ppt_preview
 from upload_s3 import upload_file_to_s3
 
 from index_server import DocumentManager
