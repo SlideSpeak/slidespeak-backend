@@ -33,10 +33,7 @@ The frontend for this project is available here: [https://github.com/SlideSpeak/
 
 ## Setup
 
-_Please note:_ Both the index server and the flask backend need to run in parallel.
-
-- Start index server `python3 index_server.py`
-- Start Flask Backend `python3 flask_demo.py`
+Run the app with Gunicorn: `gunicorn -w 8 app:app -t 6000000`
 
 ## License
 
