@@ -63,7 +63,7 @@ def upload_file():
     try:
         generated_uuid = str(uuid.uuid4())
         uploaded_file = request.files["file"]
-        filename = secure_filename(uploaded_file.filename)
+        filename = secure_filename(str(uuid.uuid4()) + '.pptx')
         print('filename')
         print(uploaded_file)
         filepath = os.path.join("documents", os.path.basename(filename))
