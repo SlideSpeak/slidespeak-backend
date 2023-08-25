@@ -5,11 +5,11 @@ import os
 from multiprocessing.managers import BaseManager
 from flask import Flask, request, jsonify, make_response, Response
 from flask_cors import CORS
-from werkzeug.utils import secure_filename
 import uuid
 from concurrent.futures import as_completed
 from file_utils import ppt_preview
 from upload_s3 import upload_file_to_s3
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.response_buffering = False
@@ -92,7 +92,7 @@ def upload_file():
     try:
         generated_uuid = str(uuid.uuid4())
         uploaded_file = request.files["file"]
-        filename = secure_filename(uploaded_file.filename)
+        filename = secure_filename(str(uuid.uuid4()) + '.pptx')
         filepath = os.path.join("documents", os.path.basename(filename))
 
         start_time = time.time()
