@@ -70,3 +70,6 @@ urllib3==1.26.16
 Werkzeug==2.3.6
 XlsxWriter==3.1.2
 yarl==1.9.2
+
+# production deployment
+gunicorn==21.0.1

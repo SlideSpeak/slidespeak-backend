@@ -1,7 +1,13 @@
 env/
 __pycache__/
-documents/
-preview_images/
 .env
 .idea
 .DS_Store
+
+# Ignore everything in these directories
+documents/*
+preview_images/*
+
+# But do not ignore .gitkeep
+!documents/.gitkeep
+!preview_images/.gitkeep
