@@ -7,7 +7,7 @@ from flask import Flask, request, jsonify, make_response, Response
 from flask_cors import CORS
 import uuid
 from concurrent.futures import as_completed
-from file_utils import ppt_preview
+from file_utils import document_preview, get_file_ext
 from upload_s3 import upload_file_to_s3
 from werkzeug.utils import secure_filename
 
@@ -92,12 +92,13 @@ def upload_file():
     try:
         generated_uuid = str(uuid.uuid4())
         uploaded_file = request.files["file"]
-        filename = secure_filename(str(uuid.uuid4()) + '.pptx')
+        ext = get_file_ext(uploaded_file.filename)
+        filename = secure_filename(str(uuid.uuid4()) + ext)
         filepath = os.path.join("documents", os.path.basename(filename))
 
         start_time = time.time()
         uploaded_file.save(filepath)
-        print('Saving the local PPT file: {:.2f}s'.format(time.time() - start_time))
+        print('Saving the local PPT/DOC file: {:.2f}s'.format(time.time() - start_time))
 
         start_time = time.time()
         if request.form.get("filename_as_doc_id", None) is not None:
@@ -120,7 +121,7 @@ def upload_file():
         "slidespeak-files",
         generated_uuid + os.path.splitext(filepath)[1],
     )
-    print('Upload PPT to S3: {:.2f}s'.format(time.time() - start_time))
+    print('Upload DOC/PPT to S3: {:.2f}s'.format(time.time() - start_time))
 
     # delete file after upload
     upload_done.add_done_callback(
@@ -128,10 +129,10 @@ def upload_file():
     )
 
     start_time = time.time()
-    preview_file_paths = ppt_preview(
+    preview_file_paths = document_preview(
         filepath, "preview_images/" + generated_uuid + ".jpg"
     )
-    print('Generating PPT preview: {:.2f}s'.format(time.time() - start_time))
+    print('Generating DOC/PPT preview: {:.2f}s'.format(time.time() - start_time))
 
     preview_urls_dict = {}
 

@@ -1,8 +1,11 @@
 from queue import Queue
+from pathlib import Path
 import os
 from threading import Thread
 from dotenv import load_dotenv
 from llama_index.callbacks import LlamaDebugHandler, CallbackManager
+
+from file_utils import get_file_ext
 
 load_dotenv()
 
@@ -48,7 +51,9 @@ llama_debug = LlamaDebugHandler(print_trace_on_end=True)
 callback_manager = CallbackManager([llama_debug])
 
 PptxReader = download_loader("PptxReader")
-loader = PptxReader()
+DocxReader = download_loader("DocxReader")
+loader_pptx = PptxReader()
+loader_docx = DocxReader()
 
 
 def initialize_index(namespace):
@@ -113,7 +118,12 @@ def insert_into_index(doc_file_path, doc_id=None):
     """Insert new document into global index."""
     global index, stored_docs, docstore
     initialize_index(doc_id)
-    document = loader.load_data(file=doc_file_path)[0]
+    print(doc_file_path)
+    ext = get_file_ext(doc_file_path)
+    if ext == '.docx':
+        document = loader_docx.load_data(file=Path(doc_file_path))[0]
+    else:
+        document = loader_pptx.load_data(file=doc_file_path)[0]
 
     # create parser and parse document into nodes
     parser = SimpleNodeParser()
