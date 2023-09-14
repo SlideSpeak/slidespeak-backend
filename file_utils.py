@@ -3,6 +3,9 @@ import zipfile
 import subprocess
 from pdf2image import convert_from_path
 
+def get_file_ext(file_path: str):
+    root, ext = os.path.splitext(file_path)
+    return ext
 
 def search_and_extract(zip_filepath, target_files, extract_to):
     # Ensure the target directory exists
@@ -24,17 +27,17 @@ def search_and_extract(zip_filepath, target_files, extract_to):
     return extracted_files
 
 
-def ppt_preview(ppt_file_path, preview_file_path):
+def document_preview(document_file_path, preview_file_path):
     # Check the file extension
-    if not ppt_file_path.endswith((".ppt", ".pptx")):
-        raise ValueError("File must be a .ppt or .pptx file")
+    if not document_file_path.endswith((".ppt", ".pptx", ".doc", ".docx")):
+        raise ValueError("File must be a .ppt, .pptx, .doc, .docx file")
 
     # Generate a temporary pdf path
-    pdf_file_path = os.path.splitext(ppt_file_path)[0] + ".pdf"
+    pdf_file_path = os.path.splitext(document_file_path)[0] + ".pdf"
     print(pdf_file_path)
 
     # Convert PowerPoint to PDF using unoconv
-    subprocess.run(["unoconv", "-f", "pdf", "-o", pdf_file_path, ppt_file_path])
+    subprocess.run(["unoconv", "-f", "pdf", "-o", pdf_file_path, document_file_path])
 
     # Convert PDF to list of images
     images = convert_from_path(pdf_file_path)
